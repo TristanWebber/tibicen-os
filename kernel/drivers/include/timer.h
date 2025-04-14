@@ -1,11 +1,8 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#include "riscv.h"
 #include <stdint.h>
-
-// Macros for normal register and DMA operations
-#define BIT(x) ((uint32_t) 1U << (x))
-#define REG_RW(base, offset) (*(volatile uint32_t *) ((base) + (offset)))
 
 #define TIMER_GROUP_0 0x6001F000
 #define TIMER_GROUP_1 0x60020000
