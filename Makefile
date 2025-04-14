@@ -20,6 +20,10 @@ SRCS        := $(KERNEL_SRCS) $(SOURCES)
 KERNEL_INC  := $(shell find $(KERNEL_DIR) -name '*.h' -exec dirname {} \; | sort -u)
 INC         := $(KERNEL_INC)
 
+# Collect include directories recursively
+#KERNEL_INC  := $(shell find $(KERNEL_DIR) -type d -name 'include')
+#INC         := $(KERNEL_INC)
+
 CFLAGS      += $(addprefix -I, $(INC))
 
 build: $(BUILD_DIR)/firmware.bin

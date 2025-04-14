@@ -1,7 +1,8 @@
+#include "drivers/include/usb.h"
 #include "timer.h"
-#include "usb.h"
 
 #include <stdint.h>
+#include <kstdio.h>
 
 extern uint32_t _sbss, _ebss;
 
@@ -21,11 +22,11 @@ int main(void) {
     int delay = 1000000;
     while (delay--) {}
 
-    usb_print("\r\n");
-    usb_print("Hello from tibicen-os!\r\n");
-    usb_print("\r\n");
-    usb_print("Goodbye from tibicen-os!\r\n");
-    usb_print("\r\n");
+    kputs("");
+    kputs("Hello from tibicen-os!");
+    kputs("");
+    kputs("Goodbye from tibicen-os!");
+    kputs("");
 
     while(1) {
         feed_wdt();
