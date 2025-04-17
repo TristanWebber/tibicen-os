@@ -1,10 +1,9 @@
+.section .entry
 .global _start
 
 _start:
     # Setup 4kB stack for C
-    la a0, _kstack_end
-    li a1, 4096
-    add sp, a0, a1
+    la sp, _kstack_end
 
     # Clear registers of any values used by ROM bootloader
     li gp, 0

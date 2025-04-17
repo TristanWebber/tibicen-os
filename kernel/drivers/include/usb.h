@@ -1,8 +1,6 @@
 #ifndef USB_H
 #define USB_H
 
-#include "riscv.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 

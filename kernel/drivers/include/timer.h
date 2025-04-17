@@ -1,7 +1,6 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "riscv.h"
 #include <stdint.h>
 
 #define TIMER_GROUP_0 0x6001F000

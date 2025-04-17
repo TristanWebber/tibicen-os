@@ -1,28 +1,28 @@
 # tibicen-os
 
-Multi-tasking monolithic OS kernel for low-cost RISC-V hardware. Created for educational purposes. Initial implementation uses a ESP32-C3 microcontroller.
+A multi-tasking monolithic OS kernel for low-cost RISC-V hardware. Created for educational purposes. The initial implementation uses a ESP32-C3 microcontroller.
 
 ## Vision
 
-This project has been created primarily for purposes of personal development. The kernel is intended to be run on real, low-cost hardware rather than a virtual machine. The following features will be implemented, in roughly this order:
+This project has been created primarily for purposes of personal training. The kernel is intended to be run on real, low-cost hardware rather than a virtual machine. The following features will be implemented, in roughly this order:
 
 ### Short-term
-- Print to a host terminal
-- Multitasking
-- Hardware interrupts
-- Userspace and syscalls
-- Memory protection
-- Crontab-like scheduler for user tasks
-- IO drivers and userspace SDK
-- Heap memory
-- Basic file system
-- Sharing data between threads
+- [x] Print to a host terminal
+- [x] Multitasking
+- [ ] Hardware interrupts
+- [ ] Userspace and syscalls
+- [ ] Memory protection
+- [ ] Crontab-like scheduler for user tasks
+- [ ] IO drivers and userspace SDK
+- [ ] Heap memory
+- [ ] Basic file system
+- [ ] Sharing data between threads
 
 ### Mid-term
-- Extend to other hardware
-- Multicore
-- Paging
-- Virtual memory
+- [ ] Extend to other hardware
+- [ ] Multicore
+- [ ] Paging
+- [ ] Virtual memory
 
 ## Hardware
 
@@ -36,12 +36,98 @@ Development has been done on a Linux machine with a gcc cross-compiler toolchain
 
 ## Building
 
-Makefile commands will be documented here.
+### Pre-requisites
+
+- ESP-IDF toolchain installed
+- `riscv32-esp-elf` added to PATH. This can be achieved by running `$HOME/esp/esp-idf/export.sh` or equivalent.
+- Device upload port in PORT. e.g. `export PORT=/dev/ttyACM0`
+- `cu` installed for serial monitoring
+
+Makefile commands are currently defined as follows:
+
+`build`: Builds the firmware.bin target
+`flash`: Flashes to chip using esptool.py
+`monitor`: Serial monitor via cu
+`clean`: Removes files from build directory
+`erase-flash`: Clears flash using esptool.py
+`disass`: Disassemble .elf to assembly using objdump
 
 ## API
 
-Userspace API will be documented here.
+The API is unstable and is not intended to be reliable in any way.
+
+### stdlib-like functions - `kstdio.h`
+
+#### `int kputchar(char byte_to_send)`
+
+Write a character to stdout. Currently uses the USB driver on the ESP32-C3. Returns the number of characters sent, or -1 for error.
+
+#### `int kputs(char *bytes_to_send)`
+
+Write a null-terminated cstring to stdout, followed by carriage return and newline. Currently uses the USB driver on the ESP32-C3. Returns the number of characters sent, or -1 for error.
+
+### multitasking functions - `task.h`
+
+Usercode goes in `user_tasks.c`. A user can define up to 4 tasks, to be placed in a round-robin scheduler. The kernel calls a user_defined function `tasks_init` to start any user-defined tasks. It is the user's responsibility to call `task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks call `task_yield()` to yield control to the scheduler at least once per second. Any tasks that terminate will need to call `task_delete()` - that is, tasks cannot return.
+
+#### `void tasks_init(void)`
+
+A user-defined initiation function. This needs to call `task_create` for all user-defined tasks. E.g. to spawn a single task with function pointer 'user_task0(void)':
+
+```C
+void tasks_init(void) {
+    task_create(user_task0);
+}
+```
+
+#### `bool task_create(void *task_function)`
+
+Adds a user-defined task, passed by function pointer, to the round-robin queue. Returns false if there are no available task slots. Task is allocated 1kB of stack. Needs to be called prior to `tasks_init`
+
+#### `void task_yield(void)`
+
+Yields to the round-robin scheduler. The scheduler will place the current task in `READY` state and start the next task with `READY` state in `RUNNING` state. Control is returned to the yielding task if it is the only `READY` task. If there are no `READY` tasks, the scheduler ends and the application enters a busy loop. `task_yield` must be called at least once per second to prevent the watchdog timer from panicking.
+
+#### `void task_delete(void)`
+
+Places a task in `DELETED` state, removing it from the scheduler's responsibility. Any task that ends must call task_delete - Task functions cannot return.
+
+## Memory layout
+
+### ESP32-C3
+The SRAM memory is accessed via both the instruction bus and data bus. The buses use different address spaces, offset by `0x70_0000`. Instructions (IRAM segment) extend from the address `0x4038_0000` to (in this case) `0x4038_8000`. Data (DRAM segment) extends from (in this case) `0x3FC8_8000`.
+
+DRAM is laid out as follows:
+
+```
+/**
+ * DRAM Memory Layout
+ *
+ * 0x3fc88000 ------------------> _sdata
+ *            |               |
+ *            |               |   1. .data section
+ *            |               |
+ * _sdata+len(.data) -----------> _edata
+ *            |               |
+ *            |               |   2. .bss section (incl. tasks, task_stacks)
+ *            |               |
+ * _edata+len(.bss) ------------> _ebss, _kstack_start
+ *            |               |
+ *            |               |   3. kernel stack grows from _end
+ *            |               |
+ * _ebss+0x1000 -----------------> _kstack_end
+ *            |               |
+ *            |               |   4. heap
+ *            |               |
+ * 0x3fc90000 ------------------> _end
+ *            |               |
+ *            |               |   5. unused
+ *            |               |
+ * 0x3fce0000 ------------------> _data_end_interface
+ */
+```
 
 ## The name
 
 The name 'tibicen' has been chosen for the Australian Magpie (Gymnorhina tibicen). It is an Australian native bird present in all states and territories and has adapted well to the urban environment. The Australian Magpie tends to be gregarious, curious, intelligent, territorial and lazy, and a small percentage of adult males are known for swooping humans in breeding season. Birds of this species have rich, complex calls that are well known to all Australians. Many wild birds choose to interact with humans with behaviours ranging from foraging freshly-turned soil in gardens, to thieving food from patrons in outdoor seating areas of restaurants and cafes.
+

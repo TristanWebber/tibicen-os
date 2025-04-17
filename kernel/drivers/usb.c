@@ -1,4 +1,6 @@
+#include "riscv.h"
 #include "usb.h"
+
 #include <stdint.h>
 
 /////////////////////////////////////////

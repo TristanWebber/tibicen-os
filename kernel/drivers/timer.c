@@ -1,4 +1,5 @@
 #include "timer.h"
+#include "riscv.h"
 #include <stdint.h>
 
 /////////////////////////////////////////

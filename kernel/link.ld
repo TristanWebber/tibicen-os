@@ -19,6 +19,7 @@ ENTRY(_start)
 
 SECTIONS {
   .text : {
+    KEEP(*(.entry))
     . = ALIGN(16);
     *(.text)
     *(.text*)

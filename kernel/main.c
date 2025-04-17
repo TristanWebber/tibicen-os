@@ -6,10 +6,6 @@
 
 extern uint32_t _sbss, _ebss;
 
-task_context_t ctx_os;
-task_context_t ctx_task;
-uint32_t task0_stack[1024];
-
 static void main_clear_bss(void) {
     volatile uint32_t *this_word = &_sbss;
     while (this_word < &_ebss) {
@@ -31,12 +27,13 @@ int main(void) {
     kputs("Main: Hello from tibicen-os!");
     kputs("");
 
-    kputs("Main: Switching to task0");
+    // Spawn user tasks
+    tasks_init();
 
-    // Configure context for user task and switch
-    ctx_task.ra = (uint32_t)user_task0;
-    ctx_task.sp = (uint32_t)&task0_stack[1023];
-    _task_switch(&ctx_os, &ctx_task);
+    kputs("Main: Switching to task scheduler");
+
+    // Hand control to the scheduler thread
+    tasks_run();
 
     kputs("Main: Control has been returned to the kernel.");
 
