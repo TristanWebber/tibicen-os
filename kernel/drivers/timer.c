@@ -7,7 +7,7 @@
 /////////////////////////////////////////
 
 // Set TIMG0 as digital single stage WDT with timeout_ms timer
-void init_wdt(uint32_t timeout_ms) {
+void timer_init_wdt(uint32_t timeout_ms) {
 
     // Disable write protect
     REG_RW(TIMER_GROUP_0, 0x0064) = 0x50D83AA1;
@@ -50,11 +50,28 @@ void init_wdt(uint32_t timeout_ms) {
 }
 
 // Feed TIMG0 WDT
-void feed_wdt(void) {
+void timer_feed_wdt(void) {
     // Disable write protect
     REG_RW(TIMER_GROUP_0, 0x0064) = 0x50D83AA1;
     // Feed WDT
     REG_RW(TIMER_GROUP_0, 0x0060) = 1;
     // Enable write protect
     REG_RW(TIMER_GROUP_0, 0x0064) = 1;
+}
+
+// Get system ticks from system timer
+uint64_t timer_systick(void) {
+    // Request systicks (TRM 10.5)
+    REG_RW(SYSTEM_TIMER, 0x4) = BIT(30);
+    // Wait for systicks to be available
+    while((REG_RW(SYSTEM_TIMER, 0x4) & BIT(29)) == 0) {
+        asm volatile("nop");
+    }
+    // Upper bits from offset 0x0040, lower bits from 0x0044
+    return ((uint64_t) REG_RW(SYSTEM_TIMER, 0x40) << 32) | REG_RW(SYSTEM_TIMER, 0x44);
+}
+
+// Convert 16MHz systicks to microseconds
+uint64_t timer_uptime_us(void) {
+    return timer_systick() >> 4;
 }

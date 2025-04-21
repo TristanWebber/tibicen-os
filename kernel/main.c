@@ -1,8 +1,9 @@
 #include "task.h"
 #include "timer.h"
 
-#include <stdint.h>
 #include <kstdio.h>
+
+#include <stdint.h>
 
 extern uint32_t _sbss, _ebss;
 
@@ -17,7 +18,7 @@ static void main_clear_bss(void) {
 int main(void) {
 
     main_clear_bss();
-    init_wdt(1000);
+    timer_init_wdt(1000);
 
     // Short delay ensures host terminal is ready
     int delay = 1000000;
@@ -35,14 +36,14 @@ int main(void) {
     // Hand control to the scheduler thread
     tasks_run();
 
-    kputs("Main: Control has been returned to the kernel.");
+    kputs("Main: Task scheduler has finished.");
 
     kputs("");
     kputs("Main: Goodbye from tibicen-os!");
     kputs("");
 
     while(1) {
-        feed_wdt();
+        timer_feed_wdt();
     }
 
     return 0;

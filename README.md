@@ -68,7 +68,7 @@ Write a null-terminated cstring to stdout, followed by carriage return and newli
 
 ### multitasking functions - `task.h`
 
-Usercode goes in `user_tasks.c`. A user can define up to 4 tasks, to be placed in a round-robin scheduler. The kernel calls a user_defined function `tasks_init` to start any user-defined tasks. It is the user's responsibility to call `task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks call `task_yield()` to yield control to the scheduler at least once per second. Any tasks that terminate will need to call `task_delete()` - that is, tasks cannot return.
+Usercode goes in `user_tasks.c`. A user can define up to 4 tasks, to be placed in a round-robin scheduler. The kernel calls a user_defined function `tasks_init` to start any user-defined tasks. It is the user's responsibility to call `task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks yield control to the scheduler at least once per second by using `task_yield()` or `task_delay_us(us)`. Any tasks that terminate will need to call `task_delete()` - that is, tasks cannot return.
 
 #### `void tasks_init(void)`
 
@@ -86,7 +86,11 @@ Adds a user-defined task, passed by function pointer, to the round-robin queue. 
 
 #### `void task_yield(void)`
 
-Yields to the round-robin scheduler. The scheduler will place the current task in `READY` state and start the next task with `READY` state in `RUNNING` state. Control is returned to the yielding task if it is the only `READY` task. If there are no `READY` tasks, the scheduler ends and the application enters a busy loop. `task_yield` must be called at least once per second to prevent the watchdog timer from panicking.
+Yields to the round-robin scheduler. The scheduler will place the current task in `READY` state and start the next task with `READY` state in `RUNNING` state. Control is returned to the yielding task if it is the only `READY` task. If there are no `READY` tasks, the scheduler ends and the application enters a busy loop. `task_yield` must be called at least once per second to prevent the watchdog timer from panicking. This can be done directly if no delay is required, or indirectly via `task_delay_us(us)`.
+
+#### `void task_delay_us(uint64_t delay_us)`
+
+Places the task in `PENDING` state for at least `delay_us`. The scheduler will test `PENDING` tasks against the system timer and will place them in `RUNNING` state when the delay has ended. Since the scheduler is cooperative, timing cannot be guaranteed.
 
 #### `void task_delete(void)`
 
