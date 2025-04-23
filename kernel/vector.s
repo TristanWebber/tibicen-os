@@ -4,7 +4,8 @@
 _vector_table:
     .option push
     .option norvc
-    .rept 32
+    j trap_handler
+    .rept 31
     j _interrupt_handler
     .endr
     .option pop
@@ -13,4 +14,9 @@ _vector_table:
 # Do nothing
 .global _interrupt_handler
 _interrupt_handler:
+    # Machine exception program counter stores the calling instruction. Adding
+    # one word to the mepc returns to the following instruction
+    csrr a0, mepc
+    addi a0, a0, 4
+    csrw mepc, a0
     mret

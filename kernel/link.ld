@@ -7,12 +7,18 @@ iram_seg_start = 0x40380000;
 /* SRAM1 can be accessed by data bus (0x3FC8_000 to 0x3FCC_AE00) */
 dram_seg_start = 0x3FC80000;
 
+/* User code can be placed beyond kernel dram */
+user_iram_seg_start = 0x40390000;
+user_dram_seg_start = 0x40390000;
+
 /* dram immediately follows iram, so offset the start of the dram space by LENGTH(iram_seg)*/
 
 MEMORY
 {
   iram_seg (RWX) :                  org = iram_seg_start, len = 32k
   dram_seg (RW) :                   org = dram_seg_start + LENGTH(iram_seg), len = 32k
+  user_iram_seg (RWX) :             org = user_iram_seg_start, len = 32k
+  user_dram_seg (RW) :              org = user_dram_seg_start + LENGTH(user_iram_seg), len = 32k
 }
 
 ENTRY(_start)
@@ -63,6 +69,15 @@ SECTIONS {
     _kstack_end = .;
   } > dram_seg
 
+  .user_text : {
+    . = ALIGN(16);
+    *(.user_text)
+  } > user_iram_seg
+
+  .user_data : {
+    . = ALIGN(16);
+    *(.user_data)
+  } > user_dram_seg
 
   . = ALIGN(16);
   PROVIDE(end = .);

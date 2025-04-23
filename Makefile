@@ -1,5 +1,6 @@
 # Source and destination parent dirs
 KERNEL_DIR  := kernel
+USER_DIR    := user
 BUILD_DIR   := build
 
 # Toolchain and flags
@@ -14,11 +15,13 @@ TOOLCHAIN   ?= riscv32-esp-elf
 
 # Collect source files recursively
 KERNEL_SRCS := $(shell find $(KERNEL_DIR) -name '*.c' -or -name '*.s')
-SRCS        := $(KERNEL_SRCS) $(SOURCES)
+USER_SRCS   := $(shell find $(USER_DIR) -name '*.c' -or -name '*.s')
+SRCS        := $(KERNEL_SRCS) $(USER_SRCS) $(SOURCES)
 
 # Collect header files recursively
 KERNEL_INC  := $(shell find $(KERNEL_DIR) -name '*.h' -exec dirname {} \; | sort -u)
-INC         := $(KERNEL_INC)
+USER_INC    := $(shell find $(USER_DIR) -name '*.h' -exec dirname {} \; | sort -u)
+INC         := $(KERNEL_INC) $(USER_INC)
 
 # Collect include directories recursively
 #KERNEL_INC  := $(shell find $(KERNEL_DIR) -type d -name 'include')
@@ -32,7 +35,7 @@ $(BUILD_DIR)/firmware.elf: $(SRCS)
 	$(TOOLCHAIN)-gcc  $(CFLAGS) $(SRCS) $(LINKFLAGS) -o $@
 
 $(BUILD_DIR)/firmware.bin: $(BUILD_DIR)/firmware.elf
-	esptool.py --chip esp32c3 elf2image $(BUILD_DIR)/firmware.elf
+	esptool.py --chip esp32c3 elf2image $<
 
 flash:
 	esptool.py -p $(PORT) $(FLASHFLAGS) $(BUILD_DIR)/firmware.bin
