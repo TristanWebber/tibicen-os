@@ -9,9 +9,22 @@ __attribute__((interrupt)) void trap_handler(void) {
     // Exception cause is last 5 bits of mcause.
     uint32_t mcause = CSR_READ(mcause) & 0b11111;
 
+    // Read syscall id from register a7
+    uint32_t call = REG_READ(a7);
+
     // Exception code 8 is ecall from usermode
     if (mcause == 0x8) {
-        kputs("Trap: User mode syscall registered.");
+
+        // Switch on syscall
+        if (call == 1) {
+            // Read arguments, stored in a0 and a1
+            char *b = (char*)REG_READ(a0);
+            uint32_t n = REG_READ(a1);
+            while (n--) {
+                kputchar(*b++);
+            }
+        }
+
         // Advance mepc to return to next instruction in calling thread
         uint32_t mepc = CSR_READ(mepc);
         CSR_WRITE(mepc, mepc + 4);

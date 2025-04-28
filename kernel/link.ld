@@ -9,7 +9,7 @@ dram_seg_start = 0x3FC80000;
 
 /* User code can be placed beyond kernel dram */
 user_iram_seg_start = 0x40390000;
-user_dram_seg_start = 0x40390000;
+user_dram_seg_start = 0x3FC90000;
 
 /* dram immediately follows iram, so offset the start of the dram space by LENGTH(iram_seg)*/
 
@@ -72,14 +72,24 @@ SECTIONS {
   .user_text : {
     . = ALIGN(16);
     *(.user_text)
+    *(.user_text*)
   } > user_iram_seg
 
   .user_data : {
     . = ALIGN(16);
     *(.user_data)
+    *(.user_data*)
+    *(.user_sdata)
+    *(.user_sdata*)
+    *(.user_srodata)
+    *(.user_srodata*)
+    *(.user_rodata)
+    *(.user_rodata*)
+    *(.user_gnu.linkonce.r.*)
+    *(.user_rodata1)
+    *(.user_riscv.*)
   } > user_dram_seg
 
-  . = ALIGN(16);
   PROVIDE(end = .);
   PROVIDE(_end = .);
 }

@@ -1,3 +1,10 @@
+// Currently runs in kernel space
+// Next: move all functionality to userspace
+// TODO: syscall for task_create
+// TODO: syscall for task_delete
+// TODO: syscall for task_yield
+// TODO: syscall for task_delay
+// TODO: refactor the jump from kernel to userspace
 #include "task.h"
 
 #include <kstdio.h>

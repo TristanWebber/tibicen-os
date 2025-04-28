@@ -1,6 +1,6 @@
-#include "kstdio.h"
+// Proof of concept for userspace executing a syscall
+#include "stdio.h"
 
-__attribute__((section(".user_text"))) void user_func(void) {
-    kputs("User: Entered user mode.");
-    asm volatile ("ecall");
+void user_func(void) {
+    puts("User: Entered user mode.");
 }
