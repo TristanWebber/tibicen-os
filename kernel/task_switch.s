@@ -1,3 +1,6 @@
+# Store callee-saved registers of current task in a C struct
+#
+# void _task_store(task_context_t *ctx);
 .global _task_store
 _task_store:
     sw ra, 0(a0)
@@ -17,9 +20,9 @@ _task_store:
 
     ret
 
-# Swap two tasks curr and next:
+# Swap two tasks curr and next, in privilege 'mode':
 #
-# void _task_switch(struct context *curr, struct context *next);
+# void _task_switch(task_context_t *curr, task_context_t *next, int mode);
 #
 # Stores the state of the current task's registers and loads the next.
 .global _task_switch
@@ -54,4 +57,8 @@ _task_switch:
     lw s10, 48(a1)
     lw s11, 52(a1)
 
+    bnez a2, _to_user
     ret
+_to_user:
+    csrw mepc, ra
+    mret

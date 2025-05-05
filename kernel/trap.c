@@ -1,41 +1,63 @@
 #include "riscv.h"
+#include "task.h"
+#include "trap.h"
+#include "usb.h"
 
 #include <kstdio.h>
 
 #include <stdint.h>
 
 // Handle CPU exceptions, including syscalls
-__attribute__((interrupt)) void trap_handler(void) {
+void trap_handler(trapframe_t *trapframe) {
     // Exception cause is last 5 bits of mcause.
     uint32_t mcause = CSR_READ(mcause) & 0b11111;
 
-    // Read syscall id from register a7
-    uint32_t call = REG_READ(a7);
+    // Advance mepc to return to next instruction in calling thread
+    uint32_t mepc = CSR_READ(mepc);
+    CSR_WRITE(mepc, mepc + 4);
 
     // Exception code 8 is ecall from usermode
-    if (mcause == 0x8) {
+    if (mcause == MCAUSE_ECALL_USER) {
 
         // Switch on syscall
-        if (call == 1) {
-            // Read arguments, stored in a0 and a1
-            char *b = (char*)REG_READ(a0);
-            uint32_t n = REG_READ(a1);
-            while (n--) {
-                kputchar(*b++);
-            }
+        switch(trapframe->a7) {
+            case SYS_WRITE:
+                // Read arguments, stored in a0 and a1
+                char *b = (char *)trapframe->a0;
+                uint32_t n = trapframe->a1;
+                while (n--) {
+                    kputchar(*b++);
+                }
+                break;
+            case SYS_TASK_CREATE:
+                // Function pointer in a0
+                void *fn = (void *)trapframe->a0;
+                task_create(fn);
+                break;
+            case SYS_TASK_DELETE:
+                task_delete();
+                break;
+            case SYS_TASK_YIELD:
+                task_yield();
+                break;
+            case SYS_TASK_DELAY:
+                // Read argument, stored in a0 and a1
+                uint64_t us = ((uint64_t)trapframe->a1 << 32) | trapframe->a0;
+                task_delay_us(us);
+                break;
+            default:
+                kputs("Unknown syscall registered.");
+                break;
         }
 
-        // Advance mepc to return to next instruction in calling thread
-        uint32_t mepc = CSR_READ(mepc);
-        CSR_WRITE(mepc, mepc + 4);
+        // Returns to asm routine
         return;
+
     // Exception code 11 is ecall from machine mode
-    } else if (mcause == 0xB) {
+    } else if (mcause == MCAUSE_ECALL_MACHINE) {
         kputs("Trap: Machine mode syscall registered.");
-        // Advance mepc to return to next instruction in calling thread
-        uint32_t mepc = CSR_READ(mepc);
-        CSR_WRITE(mepc, mepc + 4);
-        return;
+        // Nothing implemented: Loop forever (WDT will trigger a restart)
+        while(true);
     }
 
     // Any other exception code is a panic
@@ -45,7 +67,9 @@ __attribute__((interrupt)) void trap_handler(void) {
     panic_template[0] = (mcause % 10) + '0';
     kputs("Trap: Panic occurred. Exception code: ");
     kputs(panic_template);
+    kputs("Trap: Occurred at instruction: ");
+    usb_print_reg_bits(mepc);
 
-    // Loop forever (WDT will trigger a restart)
+    // Nothing implemented: Loop forever (WDT will trigger a restart)
     while(1);
 }

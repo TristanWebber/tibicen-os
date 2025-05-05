@@ -90,6 +90,26 @@ SECTIONS {
     *(.user_riscv.*)
   } > user_dram_seg
 
+  .user_bss (NOLOAD): {
+    . = ALIGN(16);
+    _subss = .;
+    *(.bss)
+    *(.bss*)
+    *(.sbss)
+    *(.sbss*)
+    *(COMMON)
+    . = ALIGN(16);
+    _eubss = .;
+  } > user_dram_seg
+
+  /* Set a stack for tasks immediately following ubss */
+  .ustack (NOLOAD) : {
+    . = ALIGN(16);
+    task_stacks = .;
+    . = . + 4096;
+    _ustack_end = .;
+  } > user_dram_seg
+
   PROVIDE(end = .);
   PROVIDE(_end = .);
 }

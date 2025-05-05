@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// Callee saved registers - used in task switching
 typedef struct task_context {
     uint32_t ra;
     uint32_t sp;
@@ -23,9 +24,10 @@ typedef struct task_context {
     uint32_t s11;
 } task_context_t;
 
-// DELETED needs to be first entry so unallocated tasks do not attempt to run
+// First entry needs to be `DELETED` state so unallocated tasks do not attempt to run
 typedef enum task_state {
     DELETED,
+    NEW,
     READY,
     PENDING,
     RUNNING,
@@ -38,14 +40,11 @@ typedef struct task_handle {
     uint64_t delay_to_us;
 } task_handle_t;
 
-extern void _task_switch(task_context_t *ctx_old, task_context_t *ctx_new);
+extern void _task_switch(task_context_t *ctx_old, task_context_t *ctx_new, int to_user_mode);
 
 extern void _task_store(task_context_t *ctx);
 
 bool task_create(void *task_function);
-
-// User defined function to spawn tasks
-void tasks_init(void);
 
 void tasks_run(void);
 

@@ -1,4 +1,5 @@
 #include "task.h"
+#include "riscv.h"
 #include "timer.h"
 
 #include <kstdio.h>
@@ -20,7 +21,7 @@ task_context_t ctx_scheduler;
 task_handle_t tasks[MAX_TASK_COUNT];
 
 // Array for task stacks (future: heap allocated)
-uint32_t task_stacks[MAX_TASK_COUNT][TASK_STACK_WORDS];
+extern uint32_t task_stacks[MAX_TASK_COUNT][TASK_STACK_WORDS];
 
 // Spawn a task to run
 bool task_create(void *task) {
@@ -34,7 +35,7 @@ bool task_create(void *task) {
 
     tasks[task_count].ctx = new_task;
     tasks[task_count].task_function = task;
-    tasks[task_count].state = READY;
+    tasks[task_count].state = NEW;
     tasks[task_count].delay_to_us = 0;
 
     task_count++;
@@ -45,7 +46,7 @@ void tasks_scheduler(void) {
 
     // Fire the first task if it has been initialised
     kputs("Tasks: Starting the tasks scheduler.");
-    _task_switch(&ctx_scheduler, &tasks[0].ctx);
+    _task_switch(&ctx_scheduler, &tasks[0].ctx, 2);
 
     while(task_count) {
         timer_feed_wdt();
@@ -53,16 +54,20 @@ void tasks_scheduler(void) {
         task_state_t current_task_state = tasks[current_task].state;
 
         switch(current_task_state) {
+            case NEW:
+                tasks[current_task].state = RUNNING;
+                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 2);
+                break;
             case READY:
                 tasks[current_task].state = RUNNING;
-                _task_switch(&ctx_scheduler, &tasks[current_task].ctx);
+                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0);
                 break;
             case PENDING:
                 // Switch tasks where timer has expired
                 if (timer_uptime_us() >= tasks[current_task].delay_to_us) {
                     tasks[current_task].state = RUNNING;
                     tasks[current_task].delay_to_us = 0;
-                    _task_switch(&ctx_scheduler, &tasks[current_task].ctx);
+                    _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0);
                     break;
                 }
                 break;
@@ -76,7 +81,7 @@ void tasks_scheduler(void) {
     }
 
     // If we fell through, it's time to hand back to the os
-    _task_switch(&ctx_scheduler, &ctx_os);
+    _task_switch(&ctx_scheduler, &ctx_os, 0);
 }
 
 // Hand control to the scheduler
@@ -92,14 +97,20 @@ void tasks_run() {
     // Only call the scheduler if at least one task has been created
     if (tasks[0].ctx.ra != 0) {
         tasks[0].state = RUNNING;
+
+        // Set user mode - scheduler will move to userspace
+        uint32_t mstatus = CSR_READ(mstatus);
+        mstatus &= ~(1 << 11);
+        CSR_WRITE(mstatus, mstatus);
+
         tasks_scheduler();
     }
 }
 
-// Remove a task from the scheduler
+// Remove currently running task from the scheduler
 void task_delete() {
     tasks[current_task].state = DELETED;
-    task_count--;
+    task_count--; // TODO reorder tasks so new tasks can be created again
     task_yield();
 }
 
@@ -123,5 +134,5 @@ void task_yield() {
         tasks[last_task].state = READY;
     }
 
-    _task_switch(&tasks[last_task].ctx, &ctx_scheduler);
+    _task_switch(&tasks[last_task].ctx, &ctx_scheduler, 0);
 }

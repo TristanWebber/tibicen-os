@@ -16,8 +16,8 @@ static void main_clear_bss(void) {
     }
 }
 
-// ecall from user mode
-void user_func(void);
+// Declaration of user's main function
+void user_main(void);
 
 // Initialise Physical Memory Protection to allow user access to entire address
 // space
@@ -36,37 +36,14 @@ int main(void) {
     kputs("Main: Hello from tibicen-os!");
     kputs("");
 
-    // Spawn user tasks
-    tasks_init();
-
-    kputs("Main: Switching to task scheduler");
-
-    // Hand control to the scheduler thread
-    tasks_run();
-
-    kputs("Main: Task scheduler has finished.");
-
-    kputs("");
-    kputs("Main: Testing syscalls...");
-
-    // ecall from machine mode
-    asm volatile ("ecall");
-
     // Allow user mode to access memory space
     pmp_init();
 
-    // Set user mode
-    uint32_t mstatus = CSR_READ(mstatus);
-    mstatus &= ~(1 << 11);
-    CSR_WRITE(mstatus, mstatus);
+    // Create user_main task
+    task_create(user_main);
 
-    // Set mepc to user_func
-    CSR_WRITE(mepc, user_func);
-    // Set return address manually and jump to a function in usermode
-    asm volatile ("auipc t0, 0");
-    asm volatile ("addi t0, t0, 12");
-    asm volatile ("mv ra, t0");
-    asm volatile ("mret");
+    // Start task scheduler
+    tasks_run();
 
     kputs("");
     kputs("Main: Goodbye from tibicen-os!");

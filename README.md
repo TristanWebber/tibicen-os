@@ -10,7 +10,7 @@ This project has been created primarily for purposes of personal training. The k
 - [x] Print to a host terminal
 - [x] Multitasking
 - [ ] Hardware interrupts
-- [ ] Userspace and syscalls (IN PROGRESS)
+- [x] Userspace and syscalls
 - [ ] Memory protection (IN PROGRESS)
 - [ ] Crontab-like scheduler for user tasks
 - [ ] IO drivers and userspace SDK
@@ -63,6 +63,22 @@ The API is unstable and is not intended to be reliable in any way.
 
 User requests kernel to write `len` characters from `bytes_to_send` to stdout. This will be extended to arbitrary file descriptors for a unix-like interface.
 
+#### sys_task_create(void *fn)
+
+Create a statically allocated task from function pointer `fn`. Adds it to the array of tasks and will be run when the cooperative round-robin scheduler reaches the task. Returns false if there are no available task slots. Task is allocated 1kB of stack.
+
+#### sys_task_delete(void)
+
+Removes the currently running task from the array of tasks and yields to the scheduler. Any task that ends must call task_delete - Task functions cannot return.
+
+#### sys_task_yield(void)
+
+Yields the currently running task to the scheduler and places it in READY state. Task will be run again as soon as the scheduler reaches that task again. sys_task_yield or sys_task_delay must be called by some task at least once per second to prevent the watchdog timer from expiring.
+
+#### sys_task_delay(uint64_t delay_us)
+
+Yields the currently running task to the scheduler and will not run again until at least `delay_us` have elapsed. If this is the only running task, the scheduler will enter a busy loop waiting for the timer to elapse. Since the scheduler is cooperative, timing cannot be guaranteed.
+
 ### stdlib-like functions - `stdio.h`
 
 The following functions are available in userspace
@@ -75,37 +91,9 @@ Write a character to stdout. Currently uses the USB driver on the ESP32-C3. Retu
 
 Write a null-terminated cstring to stdout, followed by carriage return and newline. Currently uses the USB driver on the ESP32-C3. Returns the number of characters sent, or -1 for error.
 
-### multitasking functions - `task.h`
+### Multitasking guide
 
-Multitasking is minimally implemented in kernel space. This functionality will be moved in to userspace in the next iteration of tibicen-os.
-
-Usercode goes in `user_tasks.c`. A user can define up to 4 tasks, to be placed in a round-robin scheduler. The kernel calls a user_defined function `tasks_init` to start any user-defined tasks. It is the user's responsibility to call `task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks yield control to the scheduler at least once per second by using `task_yield()` or `task_delay_us(us)`. Any tasks that terminate will need to call `task_delete()` - that is, tasks cannot return.
-
-#### `void tasks_init(void)`
-
-A user-defined initiation function. This needs to call `task_create` for all user-defined tasks. E.g. to spawn a single task with function pointer 'user_task0(void)':
-
-```C
-void tasks_init(void) {
-    task_create(user_task0);
-}
-```
-
-#### `bool task_create(void *task_function)`
-
-Adds a user-defined task, passed by function pointer, to the round-robin queue. Returns false if there are no available task slots. Task is allocated 1kB of stack. Needs to be called prior to `tasks_init`
-
-#### `void task_yield(void)`
-
-Yields to the round-robin scheduler. The scheduler will place the current task in `READY` state and start the next task with `READY` state in `RUNNING` state. Control is returned to the yielding task if it is the only `READY` task. If there are no `READY` tasks, the scheduler ends and the application enters a busy loop. `task_yield` must be called at least once per second to prevent the watchdog timer from panicking. This can be done directly if no delay is required, or indirectly via `task_delay_us(us)`.
-
-#### `void task_delay_us(uint64_t delay_us)`
-
-Places the task in `PENDING` state for at least `delay_us`. The scheduler will test `PENDING` tasks against the system timer and will place them in `RUNNING` state when the delay has ended. Since the scheduler is cooperative, timing cannot be guaranteed.
-
-#### `void task_delete(void)`
-
-Places a task in `DELETED` state, removing it from the scheduler's responsibility. Any task that ends must call task_delete - Task functions cannot return.
+Usercode goes in `user` directory and must start at a function named `user_main(void)`. A user can define up to 4 tasks (including user_main), to be placed in a round-robin cooperative scheduler. It is the user's responsibility to call `sys_task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks yield control to the scheduler at least once per second by using `sys_task_yield()` or `sys_task_delay(us)`. Any tasks that terminate will need to call `sys_task_delete()` - that is, tasks cannot return.
 
 ## Memory layout
 
