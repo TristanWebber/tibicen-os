@@ -21,7 +21,7 @@ void trap_handler(trapframe_t *trapframe) {
 
         // Switch on syscall
         switch(trapframe->a7) {
-            case SYS_WRITE:
+            case SYS_WRITE: {
                 // Read arguments, stored in a0 and a1
                 char *b = (char *)trapframe->a0;
                 uint32_t n = trapframe->a1;
@@ -29,22 +29,25 @@ void trap_handler(trapframe_t *trapframe) {
                     kputchar(*b++);
                 }
                 break;
-            case SYS_TASK_CREATE:
+            }
+            case SYS_TASK_CREATE: {
                 // Function pointer in a0
                 void *fn = (void *)trapframe->a0;
                 task_create(fn);
                 break;
+            }
             case SYS_TASK_DELETE:
                 task_delete();
                 break;
             case SYS_TASK_YIELD:
                 task_yield();
                 break;
-            case SYS_TASK_DELAY:
+            case SYS_TASK_DELAY: {
                 // Read argument, stored in a0 and a1
                 uint64_t us = ((uint64_t)trapframe->a1 << 32) | trapframe->a0;
                 task_delay_us(us);
                 break;
+            }
             default:
                 kputs("Unknown syscall registered.");
                 break;

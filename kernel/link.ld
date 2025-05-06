@@ -77,6 +77,7 @@ SECTIONS {
 
   .user_data : {
     . = ALIGN(16);
+    _sudata = .;
     *(.user_data)
     *(.user_data*)
     *(.user_sdata)
@@ -112,4 +113,7 @@ SECTIONS {
 
   PROVIDE(end = .);
   PROVIDE(_end = .);
+  PROVIDE(_eiram = iram_seg_start + LENGTH(iram_seg));
+  PROVIDE(_euiram = user_iram_seg_start + LENGTH(user_iram_seg));
+  PROVIDE(_eudram = _euiram + LENGTH(user_dram_seg));
 }
