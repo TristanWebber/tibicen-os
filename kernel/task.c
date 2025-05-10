@@ -29,14 +29,28 @@ bool task_create(void *task) {
         return false;
     }
 
+    // Find a free slot.
+    uint32_t free_idx = UINT32_MAX;
+    for (uint32_t i = 0; i < MAX_TASK_COUNT; i++) {
+        if (tasks[i].state == DELETED) {
+            free_idx = i;
+            break;
+        }
+    }
+
+    // Test a free slot was found
+    if (free_idx == UINT32_MAX) {
+        return false;
+    }
+
     task_context_t new_task = {0};
     new_task.ra = (uint32_t)task;
-    new_task.sp = (uint32_t)&task_stacks[task_count][TASK_STACK_WORDS - 1];
+    new_task.sp = (uint32_t)&task_stacks[free_idx][TASK_STACK_WORDS - 1];
 
-    tasks[task_count].ctx = new_task;
-    tasks[task_count].task_function = task;
-    tasks[task_count].state = NEW;
-    tasks[task_count].delay_to_us = 0;
+    tasks[free_idx].ctx = new_task;
+    tasks[free_idx].task_function = task;
+    tasks[free_idx].state = NEW;
+    tasks[free_idx].delay_to_us = 0;
 
     task_count++;
     return true;
@@ -68,7 +82,6 @@ void tasks_scheduler(void) {
                     tasks[current_task].state = RUNNING;
                     tasks[current_task].delay_to_us = 0;
                     _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0);
-                    break;
                 }
                 break;
             case DELETED:
@@ -110,7 +123,7 @@ void tasks_run() {
 // Remove currently running task from the scheduler
 void task_delete() {
     tasks[current_task].state = DELETED;
-    task_count--; // TODO reorder tasks so new tasks can be created again
+    task_count--;
     task_yield();
 }
 

@@ -1,12 +1,13 @@
 #ifndef USER_H
 #define USER_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // Syscalls
-void sys_write(char *bytes_to_send, int len);
+int sys_write(char *bytes_to_send, int len);
 
-void sys_task_create(void *task_function);
+bool sys_task_create(void *task_function);
 
 void sys_task_delete(void);
 

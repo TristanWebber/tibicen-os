@@ -9,8 +9,8 @@ int puts(char *bytes_to_send) {
         i++;
     }
 
-    sys_write(bytes_to_send, i);
-    putchar('\r'); i += 1;
-    putchar('\n'); i += 1;
-    return i;
+    int res = sys_write(bytes_to_send, i);
+    res += putchar('\r');
+    res += putchar('\n');
+    return res;
 }

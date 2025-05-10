@@ -46,7 +46,7 @@ _trap_entry:
     lw t2, 12(sp)
     lw s0, 16(sp)
     lw s1, 20(sp)
-    lw a0, 24(sp)
+    #lw a0, 24(sp) # skip restoring a0 - will return value for some syscalls
     lw a1, 28(sp)
     lw a2, 32(sp)
     lw a3, 36(sp)

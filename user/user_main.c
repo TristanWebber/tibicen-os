@@ -34,12 +34,44 @@ void user_task3(void) {
     sys_task_delete();
 }
 
+// New task -> Create after another task has ended
+void user_task4(void) {
+    puts("user_task4: Context Switch Success !");
+    puts("user_task4: Finished.");
+    sys_task_delete();
+}
+
+// Helper to output diagnostics on task creation
+void task_checker(bool res) {
+    if (res) {
+        puts("Task creation success.");
+    } else {
+        puts("Task creation failure.");
+    }
+}
+
 // Infinite loop main
 void user_main(void) {
     puts("user_main: Starting user_main !");
     sys_task_create(user_task1);
     sys_task_create(user_task2);
     sys_task_create(user_task3);
+
+    // Yield and delay to allow some tasks to finish
+    sys_task_delay(SECONDS_TO_MICROS(5));
+
+    // Task 1 and 2 should now be complete -> Attempt to create new tasks
+    task_checker(sys_task_create(user_task4));
+    task_checker(sys_task_create(user_task4));
+
+    // Task array will be full - This should fail
+    task_checker(sys_task_create(user_task4));
+
+    printf("Checking printf escape: %% \r\n");
+    printf("Checking printf for strings: %s \r\n", "string");
+    printf("Checking printf for integer: %d \r\n", -69);
+    printf("Checking printf for error: %ld \r\n", 69);
+
     while (1) {
         puts("user_main: Sleeping for 250ms.");
         sys_task_delay(MILLIS_TO_MICROS(250));

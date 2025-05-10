@@ -8,13 +8,16 @@
 #include <stdint.h>
 
 // Handle CPU exceptions, including syscalls
-void trap_handler(trapframe_t *trapframe) {
+void* trap_handler(trapframe_t *trapframe) {
     // Exception cause is last 5 bits of mcause.
-    uint32_t mcause = CSR_READ(mcause) & 0b11111;
+    mcause_t mcause = CSR_READ(mcause) & 0b11111;
 
     // Advance mepc to return to next instruction in calling thread
     uint32_t mepc = CSR_READ(mepc);
     CSR_WRITE(mepc, mepc + 4);
+
+    // Some syscalls have a return value
+    void *res = 0;
 
     // Exception code 8 is ecall from usermode
     if (mcause == MCAUSE_ECALL_USER) {
@@ -26,14 +29,14 @@ void trap_handler(trapframe_t *trapframe) {
                 char *b = (char *)trapframe->a0;
                 uint32_t n = trapframe->a1;
                 while (n--) {
-                    kputchar(*b++);
+                    res += kputchar(*b++);
                 }
                 break;
             }
             case SYS_TASK_CREATE: {
                 // Function pointer in a0
                 void *fn = (void *)trapframe->a0;
-                task_create(fn);
+                res = (void *)task_create(fn);
                 break;
             }
             case SYS_TASK_DELETE:
@@ -54,7 +57,7 @@ void trap_handler(trapframe_t *trapframe) {
         }
 
         // Returns to asm routine
-        return;
+        return res;
 
     // Exception code 11 is ecall from machine mode
     } else if (mcause == MCAUSE_ECALL_MACHINE) {

@@ -83,6 +83,13 @@ Yields the currently running task to the scheduler and will not run again until 
 
 The following functions are available in userspace
 
+#### `int printf(const char *fstring, ...)`
+
+Write a formatted string to stdout. Currently only supports:
+- %d - signed integers up to 32 bit
+- %s - null terminated strings
+- %% - escape the formatting to print a single %
+
 #### `int putchar(char byte_to_send)`
 
 Write a character to stdout. Currently uses the USB driver on the ESP32-C3. Returns the number of characters sent, or -1 for error.
