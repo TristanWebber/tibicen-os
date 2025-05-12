@@ -14,6 +14,7 @@ _vector_table:
 # Store caller-saved registers and call C handler
 .global _trap_entry
 _trap_entry:
+    # TODO: This continues to use the caller's stack. Switch to callee stack.
     addi sp, sp, -76
 
     sw ra,  0(sp)

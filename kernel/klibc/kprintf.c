@@ -1,12 +1,11 @@
-#include "stdio.h"
+#include "kstdio.h"
 
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <wchar.h>
 
-const char *upper_intchars = "0123456789ABCDEF";
-const char *lower_intchars = "0123456789abcdef";
+const char *klower_intchars = "0123456789abcdef";
 
 typedef enum int_base {
     BASE_8 = 8,
@@ -15,14 +14,14 @@ typedef enum int_base {
 } int_base_t;
 
 // Print up to 32bit signed decimal integers
-int printint(int d) {
+int kprintint(int d) {
     const int BASE = 10;
     int res = 0;
     char buf[10];
 
     // Print '-' sign
     if (d < 0) {
-        res += putchar('-');
+        res += kputchar('-');
         d = -d;
     }
 
@@ -34,33 +33,33 @@ int printint(int d) {
 
     // Print nonzero values from the buffer, left to right
     while (--i >= 0) {
-        res += putchar(buf[i]);
+        res += kputchar(buf[i]);
     }
 
     return res;
 }
 
 // Print up to 32bit unsigned integers as oct, dec or hex
-int printuint(uint32_t uint_arg, int_base_t base) {
+int kprintuint(uint32_t uint_arg, int_base_t base) {
     int res = 0;
     char buf[11];
 
     // Set the characters from right to left
     int i = 0;
     do {
-        buf[i++] = lower_intchars[uint_arg % base];
+        buf[i++] = klower_intchars[uint_arg % base];
     } while ((uint_arg /= base) != 0);
 
     // Print nonzero values from the buffer, left to right
     while (--i >= 0) {
-        res += putchar(buf[i]);
+        res += kputchar(buf[i]);
     }
 
     return res;
 }
 
 // Handles only '%c', '%s', '%d', '%u', %p, %x and %o
-int printf(const char *fstring, ...) {
+int kprintf(const char *fstring, ...) {
     va_list ap;
     va_start(ap, fstring);
 
@@ -77,14 +76,14 @@ int printf(const char *fstring, ...) {
                 // Print a single char
                 case 'c': {
                     char c = va_arg(ap, int);
-                    res += putchar(c);
+                    res += kputchar(c);
                     break;
                 }
                 // Print all characters in a string
                 case 's': {
                     char *s = va_arg(ap, char*);
                     while (*s) {
-                        res += putchar(*s++);
+                        res += kputchar(*s++);
                     }
                     break;
                 }
@@ -92,43 +91,43 @@ int printf(const char *fstring, ...) {
                 case 'i':
                 case 'd': {
                     int d = va_arg(ap, int);
-                    res += printint(d);
+                    res += kprintint(d);
                     break;
                 }
                 // Print unsigned ints as decimal up to 32bit
                 case 'u': {
                     int d = va_arg(ap, uint32_t);
-                    res += printuint(d, BASE_10);
+                    res += kprintuint(d, BASE_10);
                     break;
                 }
                 // Print unsigned ints (incl. *) as lowercase hex up to 32bit
                 case 'p':
                 case 'x': {
                     int d = va_arg(ap, uint32_t);
-                    res += printuint(d, BASE_16);
+                    res += kprintuint(d, BASE_16);
                     break;
                 }
                 // Print unsigned ints as octal up to 32bit
                 case 'o': {
                     int d = va_arg(ap, uint32_t);
-                    res += printuint(d, BASE_8);
+                    res += kprintuint(d, BASE_8);
                     break;
                 }
                 // Double % to escape and print a %
                 case '%':
-                    res += putchar('%');
+                    res += kputchar('%');
                     break;
                 // Something went wrong -> Print the format code
                 // This causes issues in the variadic args
                 default:
-                    res += putchar('%');
-                    res += putchar(fcode);
+                    res += kputchar('%');
+                    res += kputchar(fcode);
                     err_code = fcode;
                     err = true;
                     break;
             }
         } else {
-            res += putchar(*fstring);
+            res += kputchar(*fstring);
         }
 
         // Advance to next character
@@ -138,7 +137,7 @@ int printf(const char *fstring, ...) {
     if (err) {
         char *err_msg = "0: ERROR Unexpected format code.";
         err_msg[0] = err_code;
-        puts(err_msg);
+        kputs(err_msg);
     }
 
     va_end(ap);

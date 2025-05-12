@@ -1,7 +1,6 @@
 #include "riscv.h"
 #include "task.h"
 #include "trap.h"
-#include "usb.h"
 
 #include <kstdio.h>
 
@@ -67,14 +66,8 @@ void* trap_handler(trapframe_t *trapframe) {
     }
 
     // Any other exception code is a panic
-    char *panic_template = "00";
-    panic_template[1] = (mcause % 10) + '0';
-    mcause /= 10;
-    panic_template[0] = (mcause % 10) + '0';
-    kputs("Trap: Panic occurred. Exception code: ");
-    kputs(panic_template);
-    kputs("Trap: Occurred at instruction: ");
-    usb_print_reg_bits(mepc);
+    kprintf("Trap: Panic occurred. Exception code: %u\r\n", mcause);
+    kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
 
     // Nothing implemented: Loop forever (WDT will trigger a restart)
     while(1);

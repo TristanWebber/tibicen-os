@@ -86,9 +86,14 @@ The following functions are available in userspace
 #### `int printf(const char *fstring, ...)`
 
 Write a formatted string to stdout. Currently only supports:
-- %d - signed integers up to 32 bit
-- %s - null terminated strings
-- %% - escape the formatting to print a single %
+- %c     - a single character
+- %d, %i - signed integers up to 32 bit
+- %u     - unsigned integers up to 32 bit
+- %p     - 32 bit pointers in hex
+- %x     - unsigned integers up to 32 bit in hex
+- %o     - unsigned integers up to 32 bit in octal
+- %s     - null terminated strings
+- %%     - escape the formatting to print a single %
 
 #### `int putchar(char byte_to_send)`
 
