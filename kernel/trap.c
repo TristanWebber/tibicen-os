@@ -72,3 +72,15 @@ void* trap_handler(trapframe_t *trapframe) {
     // Nothing implemented: Loop forever (WDT will trigger a restart)
     while(1);
 }
+
+// Handler for when the asm exception routine encounters invalid process state
+void bad_trap(void) {
+
+    uint32_t mepc = CSR_READ(mepc);
+
+    kputs("Trap: ERROR Invalid process state encountered.");
+    kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
+
+    // Nothing implemented: Loop forever (WDT will trigger a restart)
+    while(1);
+}

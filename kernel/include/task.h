@@ -33,14 +33,18 @@ typedef enum task_state {
     RUNNING,
 } task_state_t;
 
-typedef struct task_handle {
-    void *task_function;
-    task_context_t ctx;
-    task_state_t state;
-    uint64_t delay_to_us;
+typedef struct task_handle {    // offset in bytes (for use in asm)
+    // Stack pointers at start is easy for interrupt handlers
+    uint32_t kernel_sp;         // 0
+    uint32_t user_sp;           // 4
+
+    void *task_function;        // 8
+    task_state_t state;         // 12
+    uint64_t delay_to_us;       // 16 (2 words)
+    task_context_t ctx;         // 24
 } task_handle_t;
 
-extern void _task_switch(task_context_t *ctx_old, task_context_t *ctx_new, int to_user_mode);
+extern void _task_switch(task_context_t *ctx_old, task_context_t *ctx_new, int to_user_mode, task_handle_t *next_task);
 
 extern void _task_store(task_context_t *ctx);
 

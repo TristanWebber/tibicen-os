@@ -11,10 +11,26 @@ _vector_table:
     .option pop
     .size _vector_table, .-_vector_table
 
+# Exception handler - always executes in machine mode
 # Store caller-saved registers and call C handler
 .global _trap_entry
 _trap_entry:
     # TODO: This continues to use the caller's stack. Switch to callee stack.
+
+    # Get the handle of the running process
+    csrr tp, mscratch
+
+    # When tp is set as UINT32_MAX, we're already in the kernel and already
+    # using a kernel stack
+    bltz tp, _no_kswap_entry
+
+    # Store the user stack pointer
+    sw sp, 4(tp)
+
+    # Switch to the kernel stack for that process
+    lw sp, 0(tp)
+
+_no_kswap_entry:
     addi sp, sp, -76
 
     sw ra,  0(sp)
@@ -61,6 +77,15 @@ _trap_entry:
     lw t6, 68(sp)
 
     addi sp, sp, 76
+
+    # Get the handle of the running process
+    csrr tp, mscratch
+
+    # When tp is set as UINT32_MAX, something has gone wrong
+    bltz tp, bad_trap
+
+    # Restore the user stack pointer
+    lw sp, 4(tp)
 
     mret
 

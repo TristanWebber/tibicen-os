@@ -64,9 +64,14 @@ SECTIONS {
   /* Set a stack for the kernel immediately following bss */
   .kstack (NOLOAD) : {
     . = ALIGN(16);
+    /* Provide 1024 bytes to the scheduler */
     _kstack_start = .;
-    . = . + 4096;
+    . = . + 1024;
     _kstack_end = .;
+    ppstack = .;
+    /* Provide 1024 bytes in the kernel for each user task */
+    . = . + 4096;
+    _ppstack_end = .;
   } > dram_seg
 
   .user_text : {

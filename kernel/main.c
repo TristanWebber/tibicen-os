@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-// Declaration of user's main function
+// Forward declaration of user's main function
 void user_main(void);
 
 int main(void) {

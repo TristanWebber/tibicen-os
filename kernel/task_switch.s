@@ -22,11 +22,12 @@ _task_store:
 
 # Swap two tasks curr and next, in privilege 'mode':
 #
-# void _task_switch(task_context_t *curr, task_context_t *next, int mode);
+# void _task_switch(task_context_t *curr, task_context_t *next, int mode, task_handle_t *next_task);
 #
 # Stores the state of the current task's registers and loads the next.
 .global _task_switch
 _task_switch:
+
     sw ra, 0(a0)
     sw sp, 4(a0)
     sw s0, 8(a0)
@@ -41,6 +42,9 @@ _task_switch:
     sw s9, 44(a0)
     sw s10, 48(a0)
     sw s11, 52(a0)
+
+    # Store the handle of the next task in mscratch
+    csrw mscratch, a3
 
     lw ra, 0(a1)
     lw sp, 4(a1)
@@ -57,8 +61,11 @@ _task_switch:
     lw s10, 48(a1)
     lw s11, 52(a1)
 
+# Stay in machine mode for mode = 0
     bnez a2, _to_user
     ret
+
+# Change to user mode for mode != 0
 _to_user:
     csrw mepc, ra
     mret

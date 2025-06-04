@@ -2,7 +2,7 @@
 .global _start
 
 _start:
-    # Setup 4kB stack for C
+    # Setup 1kB kernel stack for C
     la sp, _kstack_end
 
     # Clear registers of any values used by ROM bootloader
@@ -40,12 +40,17 @@ _start:
     csrr a0, mhartid
     bnez a0, spin
 
+    # Use mscratch to store the pid of the last running process
+    # Load UINT32_MAX when no process has run
+    li a0, 0xFFFFFFFF
+    csrw mscratch, a0
+
     # Load default vector table
     la t0, _vector_table
     ori t0, t0, 1
     csrrw zero, mtvec, t0
 
-    # Jump to user main
+    # Jump to kernel main
     j main
 
 spin:

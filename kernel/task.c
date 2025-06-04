@@ -20,8 +20,11 @@ task_context_t ctx_scheduler;
 // User created tasks (future: linked list)
 task_handle_t tasks[MAX_TASK_COUNT];
 
-// Array for task stacks (future: heap allocated)
+// Array for user task stacks (future: heap allocated)
 extern uint32_t task_stacks[MAX_TASK_COUNT][TASK_STACK_WORDS];
+
+// Array for per-process kernel stacks
+extern uint32_t ppstack[MAX_TASK_COUNT][TASK_STACK_WORDS];
 
 // Spawn a task to run
 bool task_create(void *task) {
@@ -41,6 +44,7 @@ bool task_create(void *task) {
     // Test a free slot was found
     if (free_idx == UINT32_MAX) {
         return false;
+        kputs("Tasks: ERROR no free task slot found.");
     }
 
     task_context_t new_task = {0};
@@ -51,6 +55,8 @@ bool task_create(void *task) {
     tasks[free_idx].task_function = task;
     tasks[free_idx].state = NEW;
     tasks[free_idx].delay_to_us = 0;
+    tasks[free_idx].kernel_sp = (uint32_t)&ppstack[free_idx][TASK_STACK_WORDS - 1];
+    tasks[free_idx].user_sp = new_task.sp;
 
     task_count++;
     return true;
@@ -60,7 +66,7 @@ void tasks_scheduler(void) {
 
     // Fire the first task if it has been initialised
     kputs("Tasks: Starting the tasks scheduler.");
-    _task_switch(&ctx_scheduler, &tasks[0].ctx, 2);
+    _task_switch(&ctx_scheduler, &tasks[0].ctx, 2, &tasks[0]);
 
     while(task_count) {
         timer_feed_wdt();
@@ -70,18 +76,18 @@ void tasks_scheduler(void) {
         switch(current_task_state) {
             case NEW:
                 tasks[current_task].state = RUNNING;
-                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 2);
+                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 2, &tasks[current_task]);
                 break;
             case READY:
                 tasks[current_task].state = RUNNING;
-                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0);
+                _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0, &tasks[current_task]);
                 break;
             case PENDING:
                 // Switch tasks where timer has expired
                 if (timer_uptime_us() >= tasks[current_task].delay_to_us) {
                     tasks[current_task].state = RUNNING;
                     tasks[current_task].delay_to_us = 0;
-                    _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0);
+                    _task_switch(&ctx_scheduler, &tasks[current_task].ctx, 0, &tasks[current_task]);
                 }
                 break;
             case DELETED:
@@ -94,7 +100,7 @@ void tasks_scheduler(void) {
     }
 
     // If we fell through, it's time to hand back to the os
-    _task_switch(&ctx_scheduler, &ctx_os, 0);
+    _task_switch(&ctx_scheduler, &ctx_os, 0, (task_handle_t *)UINT32_MAX);
 }
 
 // Hand control to the scheduler
@@ -147,5 +153,5 @@ void task_yield() {
         tasks[last_task].state = READY;
     }
 
-    _task_switch(&tasks[last_task].ctx, &ctx_scheduler, 0);
+    _task_switch(&tasks[last_task].ctx, &ctx_scheduler, 0, (task_handle_t *)UINT32_MAX);
 }
