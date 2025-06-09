@@ -1,4 +1,5 @@
 #include "kstdio.h"
+#include "usb.h"
 
 #include <stdbool.h>
 #include <stdarg.h>
@@ -12,6 +13,11 @@ typedef enum int_base {
     BASE_10 = 10,
     BASE_16 = 16,
 } int_base_t;
+
+// Flush buffer - wrapper for USB driver
+static void kflush() {
+    usb_fifo_flush();
+}
 
 // Print up to 32bit signed decimal integers
 int kprintint(int d) {
@@ -141,6 +147,8 @@ int kprintf(const char *fstring, ...) {
     }
 
     va_end(ap);
+
+    kflush();
 
     return res;
 }

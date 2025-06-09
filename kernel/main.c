@@ -28,6 +28,9 @@ int main(void) {
     // Create user_main task
     task_create(user_main);
 
+    // Start the systick timer
+    timer_systick_init();
+
     // Start task scheduler
     tasks_run();
 

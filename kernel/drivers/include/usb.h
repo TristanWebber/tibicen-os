@@ -4,27 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_IRQ           32
-#define MWDT_TICKS_PER_US 500
-#define MWDT_PRESCALER    20000
-
 // Register base addresses
-#define GPIO          0x60004000
-#define LOW_POWER_MGT 0x60008000
-#define IO_MUX        0x60009000
-#define TIMER_GROUP_0 0x6001F000
-#define TIMER_GROUP_1 0x60020000
-#define SYSTEM_TIMER  0x60023000
 #define USB_SERIAL    0x60043000
-#define INTERRUPT     0x600C2000
 
 // USB register offsets
 #define USB_SERIAL_JTAG_EP1_REG      0x0000
 #define USB_SERIAL_JTAG_EP1_CONF_REG 0x0004
-
-// Gpio numbers
-#define GPIO_NUM_2 2
-#define GPIO_NUM_3 3
 
 /////////////////////////////////////////
 // Functions for USB interface         //

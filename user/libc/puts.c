@@ -12,5 +12,6 @@ int puts(char *bytes_to_send) {
     int res = sys_write(bytes_to_send, i);
     res += putchar('\r');
     res += putchar('\n');
+    sys_flush();
     return res;
 }

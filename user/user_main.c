@@ -10,7 +10,7 @@
 // Repeated task
 void user_task1(void) {
     for (uint32_t i = 0; i < 4; i++) {
-        puts("user_task1: Context Switch Success !");
+        printf("user_task1: Context Switch Success ! Iteration: %i\r\n", i);
         sys_task_yield();
     }
     puts("user_task1: Finished.");
@@ -27,7 +27,7 @@ void user_task2(void) {
 // Sleeping task
 void user_task3(void) {
     for (uint32_t i = 0; i < 5; i++) {
-        puts("user_task3: Context Switch Success !");
+        printf("user_task3: Context Switch Success ! Iteration: %i\r\n", i);
         sys_task_delay(SECONDS_TO_MICROS(1));
     }
     puts("user_task3: Finished.");

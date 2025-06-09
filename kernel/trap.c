@@ -1,6 +1,8 @@
+#include "logging.h"
 #include "riscv.h"
 #include "task.h"
 #include "trap.h"
+#include "usb.h"
 
 #include <kstdio.h>
 
@@ -50,6 +52,11 @@ void* trap_handler(trapframe_t *trapframe) {
                 task_delay_us(us);
                 break;
             }
+            // TODO: create a wrapper to abstract away from usb impl
+            case SYS_FLUSH: {
+                usb_fifo_flush();
+                break;
+            }
             default:
                 kputs("Unknown syscall registered.");
                 break;
@@ -62,6 +69,7 @@ void* trap_handler(trapframe_t *trapframe) {
     } else if (mcause == MCAUSE_ECALL_MACHINE) {
         kputs("Trap: Machine mode syscall registered.");
         // Nothing implemented: Loop forever (WDT will trigger a restart)
+        kregdump();
         while(true);
     }
 
@@ -70,6 +78,7 @@ void* trap_handler(trapframe_t *trapframe) {
     kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
 
     // Nothing implemented: Loop forever (WDT will trigger a restart)
+    kregdump();
     while(1);
 }
 
@@ -82,5 +91,6 @@ void bad_trap(void) {
     kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
 
     // Nothing implemented: Loop forever (WDT will trigger a restart)
+    kregdump();
     while(1);
 }

@@ -42,3 +42,12 @@ sys_task_delay:
     li a7, 5
     ecall
     ret
+
+# Force stdout to flush
+#
+# int sys_flush(void);
+.global sys_flush
+sys_flush:
+    li a7, 6
+    ecall
+    ret

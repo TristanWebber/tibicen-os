@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "user.h"
 
 #include <stdbool.h>
 #include <stdarg.h>
@@ -142,6 +143,8 @@ int printf(const char *fstring, ...) {
     }
 
     va_end(ap);
+
+    sys_flush();
 
     return res;
 }

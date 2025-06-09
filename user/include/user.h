@@ -15,4 +15,6 @@ void sys_task_yield(void);
 
 void sys_task_delay(uint64_t delay_us);
 
+void sys_flush(void);
+
 #endif /* USER_H */

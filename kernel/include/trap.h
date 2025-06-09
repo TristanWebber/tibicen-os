@@ -43,6 +43,7 @@ typedef enum syscall {
     SYS_TASK_DELETE,
     SYS_TASK_YIELD,
     SYS_TASK_DELAY,
+    SYS_FLUSH,
 } syscall_t;
 
 #endif /* TRAP_H */
