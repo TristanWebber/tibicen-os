@@ -57,6 +57,8 @@ Makefile commands are currently defined as follows:
 
 The API is unstable and is not intended to be reliable in any way.
 
+!WARNING!: A preemptive scheduler is partly implemented. No locks are implemented yet, so thread safety is not guaranteed and crashes are very likely. NEXT: Locks and critical sections will be implemented.
+
 ### syscalls
 
 #### `sys_write(char *bytes_to_send, int len)`
@@ -65,7 +67,7 @@ User requests kernel to write `len` characters from `bytes_to_send` to stdout. T
 
 #### `sys_task_create(void *fn)`
 
-Create a statically allocated task from function pointer `fn`. Adds it to the array of tasks and will be run when the cooperative round-robin scheduler reaches the task. Returns false if there are no available task slots. Task is allocated 1kB of stack.
+Create a statically allocated task from function pointer `fn`. Adds it to the array of tasks and will be run when the preemptive round-robin scheduler reaches the task. Returns false if there are no available task slots. Task is allocated 1kB of stack.
 
 #### `sys_task_delete(void)`
 
@@ -73,11 +75,15 @@ Removes the currently running task from the array of tasks and yields to the sch
 
 #### `sys_task_yield(void)`
 
-Yields the currently running task to the scheduler and places it in READY state. Task will be run again as soon as the scheduler reaches that task again. sys_task_yield or sys_task_delay must be called by some task at least once per second to prevent the watchdog timer from expiring.
+Yields the currently running task to the scheduler and places it in READY state. Task will be run again as soon as the scheduler reaches that task again. Use of yield is not strictly necessary because the system now implements a pre-empting using a systick of ~1us.
 
 #### `sys_task_delay(uint64_t delay_us)`
 
-Yields the currently running task to the scheduler and will not run again until at least `delay_us` have elapsed. If this is the only running task, the scheduler will enter a busy loop waiting for the timer to elapse. Since the scheduler is cooperative, timing cannot be guaranteed.
+Yields the currently running task to the scheduler and will not run again until at least `delay_us` have elapsed. If this is the only running task, the scheduler will enter a busy loop waiting for the timer to elapse. Timing cannot be guaranteed.
+
+#### `sys_flush(void)`
+
+Forces a flush of the serial buffer.
 
 ### stdlib-like functions - `stdio.h`
 
@@ -105,7 +111,7 @@ Write a null-terminated cstring to stdout, followed by carriage return and newli
 
 ### Example usage
 
-Usercode goes in `user` directory and must start at a function named `user_main(void)`. A user can define up to 4 tasks (including user_main), to be placed in a round-robin cooperative scheduler. It is the user's responsibility to call `sys_task_create` on any tasks that are required to run. It is the user's responsibility to ensure tasks yield control to the scheduler at least once per second by using `sys_task_yield()` or `sys_task_delay(us)`. Any tasks that terminate will need to call `sys_task_delete()` - that is, tasks cannot return.
+Usercode goes in `user` directory and must start at a function named `user_main(void)`. A user can define up to 4 tasks (including user_main), to be placed in a round-robin preemptive scheduler. It is the user's responsibility to call `sys_task_create` on any tasks that are required to run. Tasks must yield control to the scheduler at least once per second, however this is managed by the preemptive scheduler. A user can manually yield by using `sys_task_yield()` or `sys_task_delay(us)`. Any tasks that terminate will need to call `sys_task_delete()` - that is, tasks cannot return.
 
 A minimal example is as follows:
 
@@ -122,7 +128,7 @@ void example_task_1(void) {
     for (int i = 0; i < 5; i++) {
         puts("example_task_1 is running...");
 
-        // A task cooperatively yields to a scheduler, and will run
+        // A task can cooperatively yield to a scheduler, and will run
         // again when all other tasks have had a turn.
         sys_task_yield();
     }
