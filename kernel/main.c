@@ -25,6 +25,9 @@ int main(void) {
     // Configure memory protection
     mem_init();
 
+    // Clear task stacks
+    task_clear_stacks();
+
     // Create user_main task
     task_create(user_main);
 

@@ -1,7 +1,7 @@
-#include "logging.h"
 #include "timer.h"
 #include "riscv.h"
 #include "task.h"
+
 #include <stdint.h>
 
 /////////////////////////////////////////
@@ -124,23 +124,8 @@ void systick_handler(void) {
     // Clear interrupt source
     REG_RW(SYSTEM_TIMER, SYSTIMER_INT_CLR_REG) |= BIT(0);
 
-    // Temp logging
-    //kputs("");
-    //kregdump();
-
-    //uint32_t mepc = CSR_READ(mepc);
-    //kprintf("Timer: Tick Occurred at instruction: 0x%x\r\n", mepc);
-    //kputs("");
-    //
-    // Check time on entry
-    //static uint64_t last_time;
-    //uint64_t time_now = timer_uptime_us();
-
-    //if (last_time) {
-    //    kprintf("Time since last interrupt: %ius\r\n", (uint32_t)(time_now - last_time));
-    //}
-
-    //last_time = time_now;
+    // Wait for pending write instructions to complete
+    asm volatile ("fence");
 
     // Yield to the scheduler
     task_yield();

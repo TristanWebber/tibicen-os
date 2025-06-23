@@ -50,6 +50,21 @@ void task_checker(bool res) {
     }
 }
 
+// Test and demonstrate prinf functionality
+void test_printf(void) {
+    printf("Checking printf escape: %% \r\n");
+    printf("Checking printf for chars: %c \r\n", 'c');
+    printf("Checking printf for strings: %s \r\n", "string");
+    printf("Checking printf for integer: %d \r\n", -69);
+    printf("Checking printf for unsigned integer: %u \r\n", 69);
+    printf("Checking printf for hex integer: 0x%x \r\n", 1077411840);
+    printf("Checking printf for octal integer: 0o%o \r\n", 12345678);
+    char *ptr = "pointer";
+    printf("Checking printf for pointer: 0x%p \r\n", ptr);
+
+    printf("Checking printf for error: %ld \r\n", 69);
+}
+
 // Infinite loop main
 void user_main(void) {
     puts("user_main: Starting user_main !");
@@ -67,17 +82,7 @@ void user_main(void) {
     // Task array will be full - This should fail
     task_checker(sys_task_create(user_task4));
 
-    printf("Checking printf escape: %% \r\n");
-    printf("Checking printf for chars: %c \r\n", 'c');
-    printf("Checking printf for strings: %s \r\n", "string");
-    printf("Checking printf for integer: %d \r\n", -69);
-    printf("Checking printf for unsigned integer: %u \r\n", 69);
-    printf("Checking printf for hex integer: 0x%x \r\n", 1077411840);
-    printf("Checking printf for octal integer: 0o%o \r\n", 12345678);
-    char *ptr = "pointer";
-    printf("Checking printf for pointer: 0x%p \r\n", ptr);
-
-    printf("Checking printf for error: %ld \r\n", 69);
+    test_printf();
 
     while (1) {
         puts("user_main: Sleeping for 250ms.");

@@ -1,4 +1,4 @@
-# All 31 interrupt entries jump to same label
+# All 30 unused interrupt entries jump to same label
 .balign 0x100
 .global _vector_table
 _vector_table:
@@ -31,7 +31,7 @@ _trap_entry:
     lw sp, 0(tp)
 
 _trap_store_regs:
-    addi sp, sp, -76
+    addi sp, sp, -72
 
     sw ra,  0(sp)
     sw t0,  4(sp)
@@ -76,13 +76,16 @@ _trap_store_regs:
     lw t5, 64(sp)
     lw t6, 68(sp)
 
-    addi sp, sp, 76
+    addi sp, sp, 72
 
     # Get the handle of the running process
     csrr tp, mscratch
 
     # When tp is set as UINT32_MAX, something has gone wrong
     bltz tp, bad_trap
+
+    # Store the kernel stack pointer
+    sw sp, 0(tp)
 
     # Restore the user stack pointer
     lw sp, 4(tp)
@@ -92,15 +95,11 @@ _trap_store_regs:
 # Do nothing: Not implemented yet
 .global _interrupt_handler
 _interrupt_handler:
-    # Machine exception program counter stores the calling instruction. Adding
-    # one word to the mepc returns to the following instruction
-    csrr a0, mepc
-    addi a0, a0, 4
-    csrw mepc, a0
     mret
 
 .global _systick_handler
 _systick_handler:
+
     # Get the handle of the running process
     csrr tp, mscratch
 
@@ -115,7 +114,7 @@ _systick_handler:
     lw sp, 0(tp)
 
 _systick_store_regs:
-    addi sp, sp, -128
+    addi sp, sp, -124
 
     sw ra,  0(sp)
     sw sp,  4(sp)
@@ -183,13 +182,16 @@ _systick_store_regs:
     lw t5, 116(sp)
     lw t6, 120(sp)
 
-    addi sp, sp, 128
+    addi sp, sp, 124
 
     # Get the handle of the running process
     csrr tp, mscratch
 
     # When tp is set as UINT32_MAX, no change
     bltz tp, _systick_handler_exit
+
+    # Store the kernel stack pointer
+    sw sp, 0(tp)
 
     # Restore the user stack pointer
     lw sp, 4(tp)

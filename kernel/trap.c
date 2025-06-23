@@ -1,4 +1,4 @@
-#include "logging.h"
+#include "klogging.h"
 #include "riscv.h"
 #include "task.h"
 #include "trap.h"
@@ -69,7 +69,7 @@ void* trap_handler(trapframe_t *trapframe) {
     } else if (mcause == MCAUSE_ECALL_MACHINE) {
         kputs("Trap: Machine mode syscall registered.");
         // Nothing implemented: Loop forever (WDT will trigger a restart)
-        kregdump();
+        klogging_regdump(trapframe);
         while(true);
     }
 
@@ -78,7 +78,7 @@ void* trap_handler(trapframe_t *trapframe) {
     kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
 
     // Nothing implemented: Loop forever (WDT will trigger a restart)
-    kregdump();
+    klogging_regdump(trapframe);
     while(1);
 }
 
@@ -91,6 +91,5 @@ void bad_trap(void) {
     kprintf("Trap: Occurred at instruction: 0x%x\r\n", mepc);
 
     // Nothing implemented: Loop forever (WDT will trigger a restart)
-    kregdump();
     while(1);
 }

@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <wchar.h>
 
 const char *klower_intchars = "0123456789abcdef";
 
@@ -102,20 +101,20 @@ int kprintf(const char *fstring, ...) {
                 }
                 // Print unsigned ints as decimal up to 32bit
                 case 'u': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += kprintuint(d, BASE_10);
                     break;
                 }
                 // Print unsigned ints (incl. *) as lowercase hex up to 32bit
                 case 'p':
                 case 'x': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += kprintuint(d, BASE_16);
                     break;
                 }
                 // Print unsigned ints as octal up to 32bit
                 case 'o': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += kprintuint(d, BASE_8);
                     break;
                 }

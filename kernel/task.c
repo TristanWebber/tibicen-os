@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #define MAX_TASK_COUNT 4
-#define TASK_STACK_WORDS 1024
+#define TASK_STACK_WORDS 256 // 1024 bytes = 256 4-byte words
 
 uint32_t task_count = 0;
 uint32_t current_task = 0;
@@ -19,12 +19,6 @@ task_context_t ctx_scheduler;
 
 // User created tasks (future: linked list)
 task_handle_t tasks[MAX_TASK_COUNT];
-
-// Array for user task stacks (future: heap allocated)
-extern uint32_t task_stacks[MAX_TASK_COUNT][TASK_STACK_WORDS];
-
-// Array for per-process kernel stacks
-extern uint32_t ppstack[MAX_TASK_COUNT][TASK_STACK_WORDS];
 
 // Spawn a task to run
 bool task_create(void *task) {
@@ -47,7 +41,17 @@ bool task_create(void *task) {
         kputs("Tasks: ERROR no free task slot found.");
     }
 
-    task_context_t new_task = {0};
+    // Clear stacks
+    for (unsigned int i = 0; i < TASK_STACK_WORDS; i++) {
+        task_stacks[free_idx][i] = 0;
+        ppstack[free_idx][i] = 0;
+    }
+
+    // Set a sentinel value
+    task_stacks[free_idx][0] = 0xCAFEF00D;
+    ppstack[free_idx][0] = 0xCAFEF00D;
+
+    task_context_t new_task;
     new_task.ra = (uint32_t)task;
     new_task.sp = (uint32_t)&task_stacks[free_idx][TASK_STACK_WORDS - 1];
 
@@ -154,4 +158,14 @@ void task_yield() {
     }
 
     _task_switch(&tasks[last_task].ctx, &ctx_scheduler, 0, (task_handle_t *)UINT32_MAX);
+}
+
+// Clear task stacks before first use
+void task_clear_stacks(void) {
+    for (unsigned int task = 0; task < MAX_TASK_COUNT; task++) {
+        for (unsigned int word = 0; word < TASK_STACK_WORDS; word++) {
+            task_stacks[task][word] = 0;
+            ppstack[task][word] = 0;
+        }
+    }
 }

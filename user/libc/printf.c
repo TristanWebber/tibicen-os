@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <wchar.h>
 
 const char *upper_intchars = "0123456789ABCDEF";
 const char *lower_intchars = "0123456789abcdef";
@@ -98,20 +97,20 @@ int printf(const char *fstring, ...) {
                 }
                 // Print unsigned ints as decimal up to 32bit
                 case 'u': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += printuint(d, BASE_10);
                     break;
                 }
                 // Print unsigned ints (incl. *) as lowercase hex up to 32bit
                 case 'p':
                 case 'x': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += printuint(d, BASE_16);
                     break;
                 }
                 // Print unsigned ints as octal up to 32bit
                 case 'o': {
-                    int d = va_arg(ap, uint32_t);
+                    uint32_t d = va_arg(ap, uint32_t);
                     res += printuint(d, BASE_8);
                     break;
                 }

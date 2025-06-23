@@ -4,6 +4,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+extern uint32_t task_count;
+extern uint32_t current_task;
+
+// Array for user task stacks (future: heap allocated)
+extern uint32_t task_stacks[4][256];
+
+// Array for per-process kernel stacks
+extern uint32_t ppstack[4][256];
+
 // Callee saved registers - used in task switching
 typedef struct task_context {
     uint32_t ra;
@@ -22,6 +31,26 @@ typedef struct task_context {
     uint32_t s9;
     uint32_t s10;
     uint32_t s11;
+
+    // caller-saved
+    uint32_t gp;
+    uint32_t tp;
+    uint32_t t0;
+    uint32_t t1;
+    uint32_t t2;
+    uint32_t a0;
+    uint32_t a1;
+    uint32_t a2;
+    uint32_t a3;
+    uint32_t a4;
+    uint32_t a5;
+    uint32_t a6;
+    uint32_t a7;
+    uint32_t t3;
+    uint32_t t4;
+    uint32_t t5;
+    uint32_t t6;
+    uint32_t mepc;
 } task_context_t;
 
 // First entry needs to be `DELETED` state so unallocated tasks do not attempt to run
@@ -44,6 +73,11 @@ typedef struct task_handle {    // offset in bytes (for use in asm)
     task_context_t ctx;         // 24
 } task_handle_t;
 
+extern task_handle_t tasks[4];
+
+extern task_context_t ctx_os;
+extern task_context_t ctx_scheduler;
+
 extern void _task_switch(task_context_t *ctx_old, task_context_t *ctx_new, int to_user_mode, task_handle_t *next_task);
 
 extern void _task_store(task_context_t *ctx);
@@ -57,5 +91,7 @@ void task_delete(void);
 void task_yield(void);
 
 void task_delay_us(uint64_t delay_us);
+
+void task_clear_stacks(void);
 
 #endif /* TASK_H */
